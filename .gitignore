@@ -1,0 +1,25 @@
+# Python
+__pycache__/
+*.py[cod]
+.pytest_cache/
+
+# Virtual environment
+.venv/
+venv/
+
+# Secrets: never commit your real API key
+.env
+
+# Editors / OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# Streamlit local secrets
+.streamlit/secrets.toml
+
+# Personal notes (kept locally, not published)
+docs/*
+!docs/PRD.md
+archive_bank/
