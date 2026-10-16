@@ -54,8 +54,22 @@ Put one key in `.env`: `ANTHROPIC_API_KEY=...` (paid) or `GEMINI_API_KEY=...` (f
 python try_insights.py          # pain points, recommendations, quote audit
 python -m fiq.evaluation        # rule-based accuracy on the 20-review set (15/20 = 75%)
 python -m fiq.evaluation --llm  # LLM accuracy on the same set (needs a key; Gemini scored 20/20)
+python -m fiq.analytics         # SQL analytics: four product questions over the analysed reviews
 python -m pytest                # test suite
 ```
+
+## SQL analytics
+
+[`analytics/queries.sql`](analytics/queries.sql) answers four product questions in SQL (CTEs, joins, a window function). `python -m fiq.analytics` loads the analysed reviews into SQLite (tables `reviews` and `review_themes`) and runs them all; add `--llm` to use LLM labels.
+
+| Question | Finding (rule-based labels, synthetic data) |
+|---|---|
+| Which order types drive complaints? | Meal orders: **80%** negative (avg 1.80★) vs Snacks **27%** (3.27★), about 3× |
+| One-off spike or steady problem? | *Missing or incorrect items* is #1 or tied #1 for complaints in **every month** (Jul–Sep) |
+| Does text-only sentiment agree with stars? | **0 contradictions**: 30 of 35 low-rated reviews negative, 17 of 18 high-rated positive |
+| Which problems fail together? | Missing items + refund/support complaints (2 negative reviews) |
+
+With Gemini labels the order-type ranking holds (Meal 87% vs Snacks 40%).
 
 ## Results on the synthetic sample
 

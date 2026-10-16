@@ -97,6 +97,7 @@ Upload CSV → Validate → Mask PII → Sentiment + themes (rules, or Claude wi
 | F9 | Evaluation | Accuracy, confusion matrix, per-class precision/recall, misclassified list on a separate labelled set |
 | F10 | Export | UTF-8 CSV (Excel-safe, formula-injection-safe) and a Markdown report |
 | F11 | Dashboard filters | Sentiment, theme, order type, rating range, date range; insights stay on the full dataset |
+| F12 | SQL analytics | `analytics/queries.sql` answers product questions over `reviews` + `review_themes` tables (complaint rate by order type, top theme per month, text vs star agreement, co-occurring complaints); results pinned by tests |
 
 ## 7. AI requirements
 
