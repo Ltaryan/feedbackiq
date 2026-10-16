@@ -12,7 +12,7 @@ A customer-feedback analyser for a 10-minute food delivery app. Upload reviews a
 | Privacy | `fiq/privacy.py` | Masks phone numbers, emails, UPI IDs and card numbers before anything is shown, exported or sent to the LLM. Names are not detected. |
 | Sentiment | `fiq/sentiment.py` | Transparent word-list baseline that reads the text only, never the star rating. |
 | Themes | `fiq/themes.py` | 8 delivery-app themes plus *Other / Unclassified*. A review can have several. |
-| Optional LLM | `fiq/llm.py` | Anthropic Claude labels sentiment and themes with structured JSON output. Off by default; any failure falls back to rules, row by row. |
+| Optional LLM | `fiq/llm.py` | Anthropic Claude or Google Gemini labels sentiment and themes with schema-constrained JSON. Off by default; any failure falls back to rules, row by row. |
 | Pipeline | `fiq/pipeline.py` | Records which method labelled each review. |
 | Insights | `fiq/insights.py` | Pain points ranked by negative-review count. Every quote is an exact sentence from its source review, checked by `verify_all_quotes`. |
 | Evaluation | `fiq/evaluation.py` | Accuracy, confusion matrix and per-class precision/recall on a separate 20-review labelled set. |
@@ -30,13 +30,13 @@ streamlit run app.py
 
 In the sidebar choose **Synthetic sample** and click **Analyze reviews**. No API key is needed.
 
-### Optional: use Claude
+### Optional: use an LLM (Claude or Gemini)
 
 ```bash
 copy .env.example .env          # macOS/Linux: cp .env.example .env
 ```
 
-Put your key in `.env` (`ANTHROPIC_API_KEY=...`), restart the app and tick **Use Anthropic LLM**. Review text (with contact details masked) is then sent to Anthropic's API, so use synthetic or approved data only. At most 500 reviews are sent per run (`FIQ_MAX_LLM_REVIEWS`); the rest use the rule-based fallback.
+Put one key in `.env`: `ANTHROPIC_API_KEY=...` (paid) or `GEMINI_API_KEY=...` (free tier at aistudio.google.com/apikey). Restart the app and tick **Use ... LLM**. Review text (with contact details masked) is then sent to that provider's API, so use synthetic or approved data only. At most 500 reviews are sent per run (`FIQ_MAX_LLM_REVIEWS`); the rest use the rule-based fallback.
 
 ## CSV format
 
@@ -56,10 +56,18 @@ python -m fiq.evaluation        # rule-based accuracy on the 20-review set (15/2
 python -m pytest                # test suite
 ```
 
-## Results on the synthetic sample (rule-based)
+## Results on the synthetic sample
 
 - Top pain point: *Missing or incorrect items* (8 of 10 mentions negative), then App experience, Food quality, Refunds and Pricing.
-- Sentiment accuracy on the evaluation set: 15/20 = 75%. The misses are sarcasm, mild complaints with no negative words, and neutral reviews that contain "fine" or "on time".
+- Sentiment accuracy on the 20-review evaluation set:
+
+  | Method | Accuracy | Negative precision / recall |
+  |---|---|---|
+  | Rule-based fallback | 15/20 = **75%** | 86% / 75% |
+  | LLM: Google Gemini (`gemini-3.8-flash`) | 20/20 = **100%** (same result on 3 runs) | 100% / 100% |
+
+  The rules miss sarcasm, mild complaints with no negative words, and neutral reviews that contain "fine" or "on time". The LLM also labelled the mood of all 11 known-gap sentences correctly (sarcasm, "never late", food safety, payments, Hindi, emoji).
+- **Read with care:** 20 short synthetic reviews labelled by the author is a small, easy test, so 100% is an upper bound, not a production estimate. The LLM still files food-safety, rider and payment complaints under the wrong topics because those topics don't exist yet: a better model doesn't fix a missing category.
 
 ## Limitations
 

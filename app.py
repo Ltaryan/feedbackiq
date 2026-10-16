@@ -23,7 +23,7 @@ from fiq.constants import ALL_THEMES, OTHER, SENTIMENTS
 from fiq.evaluation import evaluate
 from fiq.export import analysed_csv_bytes, report_markdown
 from fiq.insights import build_pain_points, build_recommendations, verify_all_quotes
-from fiq.llm import get_llm_client, refine_recommendation_text
+from fiq.llm import get_llm_client, method_label, refine_recommendation_text
 from fiq.pipeline import analyze_dataframe
 from fiq.validation import validate_reviews
 
@@ -43,6 +43,7 @@ st.markdown('<p class="fiq-sub">Customer feedback analyser for a 10-minute food 
 
 # ------------------------------------------------------------------ sidebar
 llm_client, llm_msg = get_llm_client()
+provider = method_label(llm_client).split(" LLM")[0] if llm_client else ""  # "Anthropic" or "Google Gemini"
 with st.sidebar:
     st.header("1. Data")
     source = st.radio("Source", ["Synthetic sample (60 reviews)", "Upload my CSV"])
@@ -56,10 +57,10 @@ with st.sidebar:
     st.header("2. AI")
     use_llm = False
     if llm_client:
-        use_llm = st.checkbox("Use Anthropic LLM", value=False,
-                              help="Off by default. When on, review text is sent to Anthropic's API.")
+        use_llm = st.checkbox(f"Use {provider} LLM", value=False,
+                              help=f"Off by default. When on, review text is sent to {provider}'s API.")
         if use_llm:
-            st.warning("Review text will be sent to an external provider (Anthropic). Use synthetic or approved data only.")
+            st.warning(f"Review text will be sent to an external provider ({provider}). Use synthetic or approved data only.")
     else:
         st.caption(llm_msg)
     st.caption("Without the LLM, a clearly labelled rule-based fallback is used.")
@@ -107,7 +108,7 @@ if res["sample"]:
     st.warning("**Synthetic data.** These reviews were written for a portfolio demo. They are not real customer feedback, "
                "and this project is not affiliated with any delivery company.")
 if info["llm_reviews"]:
-    st.info(f"Method: **{info['method_label']}**. Review text was sent to the Anthropic API.")
+    st.info(f"Method: **{info['method_label']}**. Review text was sent to the {provider} API.")
 else:
     st.warning(f"Method: **{info['method_label']}**")
 for w in info["warnings"] + report["warnings"]:
@@ -266,7 +267,7 @@ with tabs[4]:
     else:
         b1, b2 = st.columns(2)
         run_rules = b1.button("Run evaluation (rule-based fallback)")
-        run_llm = b2.button("Run evaluation (LLM, sends 20 reviews to Anthropic)", disabled=not (llm_client and use_llm))
+        run_llm = b2.button(f"Run evaluation (LLM, sends 20 reviews to {provider or 'the provider'})", disabled=not (llm_client and use_llm))
         if run_rules or run_llm:
             try:
                 res["evaluation"] = evaluate(pd.read_csv(EVAL), client=llm_client if run_llm else None)

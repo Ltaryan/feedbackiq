@@ -11,7 +11,9 @@ TABS = ["Dashboard", "Feedback", "Insights", "Recommendations", "Evaluation", "E
 
 @pytest.fixture
 def at(monkeypatch):
-    monkeypatch.delenv("ANTHROPIC_API_KEY", raising=False)
+    # empty (not deleted) so app.py's load_dotenv() cannot fill them from a local .env
+    for var in ("ANTHROPIC_API_KEY", "GEMINI_API_KEY", "FIQ_PROVIDER"):
+        monkeypatch.setenv(var, "")
     return AppTest.from_file(APP, default_timeout=60).run()
 
 
@@ -55,6 +57,7 @@ def test_llm_option_hidden_without_key(at):
 
 def test_llm_is_off_by_default_with_key(monkeypatch):
     monkeypatch.setenv("ANTHROPIC_API_KEY", "sk-test-not-real")
+    monkeypatch.setenv("FIQ_PROVIDER", "")
     app = AppTest.from_file(APP, default_timeout=60).run()
     assert app.sidebar.checkbox[0].value is False  # privacy: nothing is sent unless the user opts in
 

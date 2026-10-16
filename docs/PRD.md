@@ -2,7 +2,7 @@
 
 | | |
 |---|---|
-| **Status** | v1 built (portfolio prototype); v2 planned |
+| **Status** | v1 and v1.1 built (portfolio prototype); v2 planned |
 | **Owner** | Product Manager (author) |
 | **Last updated** | October 2026 |
 | **Type** | Internal tool for CX, Ops and Product teams |
@@ -102,7 +102,7 @@ Upload CSV → Validate → Mask PII → Sentiment + themes (rules, or Claude wi
 
 | Area | Requirement |
 |---|---|
-| Model | Anthropic Claude (`claude-opus-5-5` by default; configurable with `FIQ_MODEL`) |
+| Model | Anthropic Claude (`claude-opus-5-5`, default) or Google Gemini (`gemini-3.8-flash`, free tier), chosen by which key is set or `FIQ_PROVIDER` |
 | Output | Structured JSON constrained by a schema; only allowed sentiments and themes accepted |
 | Batching | 20 reviews per request |
 | Failure handling | Any error, refusal, truncation or invalid label → that review uses the rules; a banner reports how many |
@@ -119,7 +119,7 @@ v1 is a prototype; these are the **targets** for a pilot with a real team.
 | Type | Metric | Target |
 |---|---|---|
 | **North star** | Time from "reviews exported" to "top 3 issues agreed with evidence" | From ~1 day (manual reading) to **< 30 minutes** |
-| Quality | Negative-class recall (complaints caught) | ≥ 85% (rules today: 75%) |
+| Quality | Negative-class recall (complaints caught) | ≥ 85% (rules 75%; Gemini 100% on the 20-review set) |
 | Quality | Overall sentiment accuracy on a 200-review, double-labelled set | ≥ 85% with the LLM |
 | Trust | Quote audit pass rate | **100%** (hard requirement) |
 | Trust | Share of reviews in "Other / Unclassified" | < 10% |
@@ -128,7 +128,14 @@ v1 is a prototype; these are the **targets** for a pilot with a real team.
 | Guardrail | PII found in exports or LLM payloads | 0 |
 | Guardrail | LLM cost per 1,000 reviews | Tracked and within budget |
 
-**Current measured baseline (rule-based, synthetic data):** accuracy 15/20 = 75%. Precision/recall: Positive 70%/100%, Neutral 67%/40%, Negative 86%/75%. Quote audit 100%.
+**Current measured results (synthetic data, 20-review evaluation set):**
+
+| Method | Accuracy | Positive P/R | Neutral P/R | Negative P/R |
+|---|---|---|---|---|
+| Rule-based | 15/20 = 75% | 70% / 100% | 67% / 40% | 86% / 75% |
+| Gemini `gemini-3.8-flash` | 20/20 = 100% (3 of 3 runs) | 100% / 100% | 100% / 100% | 100% / 100% |
+
+Quote audit: 100%. Gemini also labelled the mood of all 11 known-gap sentences correctly, but put food-safety, rider and payment complaints under existing, wrong topics. **Decision:** the evaluation set is too small and too easy to tell good LLMs apart, so v2 grows it to 200+ real, double-labelled reviews, and the missing topics are added as a product change, not left to the model.
 
 ## 9. Risks and mitigations
 
@@ -148,7 +155,7 @@ v1 is a prototype; these are the **targets** for a pilot with a real team.
 | Phase | Scope | Exit criteria |
 |---|---|---|
 | **v1 (done)** | Everything in sections 6–7; synthetic data; 137 automated tests | Rules 75% on the eval set; quote audit 100%; all tests pass |
-| **v1.1** | LLM evaluation measured; live demo on Streamlit Cloud | LLM accuracy recorded and compared with rules |
+| **v1.1 (done, except demo)** | LLM evaluation measured (Gemini 100% vs rules 75%); Gemini free-tier support; live demo on Streamlit Cloud (pending) | LLM accuracy recorded and compared with rules ✅ |
 | **v2** | Food safety, Delivery partner and Payments themes; food-safety alert; trend alerts; 200-review double-labelled eval set | Negative recall ≥ 85%; "Other" < 10% |
 | **v3** | Store/city breakdowns; refund-cost link; label-correction feedback loop; Hindi/Hinglish; login | Pilot team uses it weekly |
 

@@ -6,7 +6,7 @@ import pandas as pd
 
 from .constants import METHOD_RULES, OTHER
 from . import llm
-from .llm import METHOD_LLM, classify_reviews
+from .llm import classify_reviews
 from .sentiment import rule_based_sentiment
 from .themes import assign_themes
 
@@ -21,6 +21,7 @@ def analyze_dataframe(clean: pd.DataFrame, client=None):
     df = clean.copy().reset_index(drop=True)
     warnings: list[str] = []
     labels: dict[str, dict] = {}
+    method_llm = llm.method_label(client)
     if client is not None and len(df):
         rows = list(zip(df["review_id"].astype(str), df["feedback_text"].astype(str)))
         if len(rows) > llm.MAX_LLM_REVIEWS:
@@ -37,7 +38,7 @@ def analyze_dataframe(clean: pd.DataFrame, client=None):
         if lab is not None:
             sentiments.append(lab["sentiment"])
             themes.append(lab["themes"] or [OTHER])
-            methods.append(METHOD_LLM)
+            methods.append(method_llm)
         else:
             sentiments.append(rule_based_sentiment(text))
             themes.append(assign_themes(text))
@@ -48,13 +49,13 @@ def analyze_dataframe(clean: pd.DataFrame, client=None):
     df["themes"] = ["; ".join(t) for t in themes]
     df["analysis_method"] = methods
 
-    llm_n = sum(m == METHOD_LLM for m in methods)
+    llm_n = sum(m == method_llm for m in methods)
     if llm_n == 0:
         label = METHOD_RULES
     elif llm_n == len(df):
-        label = METHOD_LLM
+        label = method_llm
     else:
-        label = f"{METHOD_LLM} for {llm_n} reviews, {METHOD_RULES} for {len(df) - llm_n}"
+        label = f"{method_llm} for {llm_n} reviews, {METHOD_RULES} for {len(df) - llm_n}"
     info = {
         "method_label": label,
         "llm_reviews": llm_n,

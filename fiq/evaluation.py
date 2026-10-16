@@ -67,10 +67,29 @@ def evaluate(eval_df: pd.DataFrame, client=None) -> dict:
 
 
 def main() -> None:
+    """python -m fiq.evaluation          rule-based fallback
+       python -m fiq.evaluation --llm    Claude (needs ANTHROPIC_API_KEY; sends the 20 reviews to Anthropic)"""
+    import sys
     from pathlib import Path
 
+    client = None
+    if "--llm" in sys.argv:
+        try:
+            from dotenv import load_dotenv
+
+            load_dotenv()
+        except ImportError:
+            pass
+        from .llm import get_llm_client
+
+        client, msg = get_llm_client()
+        if client is None:
+            sys.exit(f"Cannot run the LLM evaluation: {msg}")
+
     path = Path(__file__).resolve().parent.parent / "sample_data" / "eval_set_20.csv"
-    ev = evaluate(pd.read_csv(path))
+    ev = evaluate(pd.read_csv(path), client=client)
+    for w in ev["warnings"]:
+        print(f"WARNING: {w}")
     print(f"Method: {ev['method_label']}")
     print(f"Sentiment accuracy: {ev['correct']}/{ev['n']} = {ev['accuracy']:.0%}")
     print()
