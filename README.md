@@ -80,9 +80,11 @@ With Gemini labels the order-type ranking holds (Meal 87% vs Snacks 40%).
   |---|---|---|
   | Rule-based fallback | 15/20 = **75%** | 86% / 75% |
   | LLM: Google Gemini (`gemini-3.8-flash`) | 20/20 = **100%** (same result on 3 runs) | 100% / 100% |
+  | LLM: Google Gemini (`gemini-3.6-flash`), second check | 20/20 = **100%** | 100% / 100% |
 
-  The rules miss sarcasm, mild complaints with no negative words, and neutral reviews that contain "fine" or "on time". The LLM also labelled the mood of all 11 known-gap sentences correctly (sarcasm, "never late", food safety, payments, Hindi, emoji).
-- **Read with care:** 20 short synthetic reviews labelled by the author is a small, easy test, so 100% is an upper bound, not a production estimate. The LLM still files food-safety, rider and payment complaints under the wrong topics because those topics don't exist yet: a better model doesn't fix a missing category.
+  The rules miss sarcasm, mild complaints with no negative words, and neutral reviews that contain "fine" or "on time".
+- **Known gaps:** the test suite records 12 known gaps in the rules (the `xfailed` tests): **9 mood gaps** (sarcasm, "never late", "delivered in 8 minutes", a broken promise, two food-safety complaints, a UPI double charge, emoji, Hindi script) and **3 topic gaps** (no food-safety, delivery-partner or payments topic). Both Gemini models labelled the mood of **all 9** mood-gap sentences correctly and fixed **0 of 3** topic gaps: they filed the rude-rider and cash-change complaints under *Pricing* and the hair-in-food complaint under *Food quality*. A better model doesn't fix a missing category.
+- **Read with care, results are directional:** 20 short synthetic reviews is a small, easy test. The evaluation set and the rules were written by the same author, so the 75% may be optimistic too; the LLM prompt was not tuned on these reviews. 100% is an upper bound, not a production estimate. Next step: a larger, held-out set of real reviews labelled by two people.
 
 ## Limitations
 

@@ -135,8 +135,9 @@ v1 is a prototype; these are the **targets** for a pilot with a real team.
 |---|---|---|---|---|
 | Rule-based | 15/20 = 75% | 70% / 100% | 67% / 40% | 86% / 75% |
 | Gemini `gemini-3.8-flash` | 20/20 = 100% (3 of 3 runs) | 100% / 100% | 100% / 100% | 100% / 100% |
+| Gemini `gemini-3.6-flash` (second check) | 20/20 = 100% | 100% / 100% | 100% / 100% | 100% / 100% |
 
-Quote audit: 100%. Gemini also labelled the mood of all 11 known-gap sentences correctly, but put food-safety, rider and payment complaints under existing, wrong topics. **Decision:** the evaluation set is too small and too easy to tell good LLMs apart, so v2 grows it to 200+ real, double-labelled reviews, and the missing topics are added as a product change, not left to the model.
+Quote audit: 100%. Of the rules' 12 known gaps (9 mood, 3 topic), Gemini fixed all 9 mood gaps and 0 of 3 topic gaps: it put food-safety, rider and payment complaints under existing, wrong topics. A second model (`gemini-3.6-flash`) gave the same results, including 20/20. Results are directional: the evaluation set is small, synthetic and written by the same author as the rules. **Decision:** the evaluation set is too small and too easy to tell good LLMs apart, so v2 grows it to 200+ real, double-labelled reviews, and the missing topics are added as a product change, not left to the model.
 
 ## 9. Risks and mitigations
 
