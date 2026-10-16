@@ -53,6 +53,7 @@ Put one key in `.env`: `ANTHROPIC_API_KEY=...` (paid) or `GEMINI_API_KEY=...` (f
 ```bash
 python try_insights.py          # pain points, recommendations, quote audit
 python -m fiq.evaluation        # rule-based accuracy on the 20-review set (15/20 = 75%)
+python -m fiq.evaluation --llm  # LLM accuracy on the same set (needs a key; Gemini scored 20/20)
 python -m pytest                # test suite
 ```
 
