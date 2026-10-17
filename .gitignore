@@ -22,4 +22,8 @@ Thumbs.db
 # Personal notes (kept locally, not published)
 docs/*
 !docs/PRD.md
+!docs/ROADMAP.md
+!docs/EXPERIMENT_PLAN.md
+!docs/TRACKING_PLAN.md
+!docs/USER_RESEARCH.md
 archive_bank/

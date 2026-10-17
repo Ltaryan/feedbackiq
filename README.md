@@ -17,6 +17,7 @@ A customer-feedback analyser for a 10-minute food delivery app. Upload reviews a
 | Insights | `fiq/insights.py` | Pain points ranked by negative-review count. Every quote is an exact sentence from its source review, checked by `verify_all_quotes`. |
 | Evaluation | `fiq/evaluation.py` | Accuracy, confusion matrix and per-class precision/recall on a separate 20-review labelled set. |
 | Export | `fiq/export.py` | Analysed CSV and a Markdown report. |
+| Analytics | `fiq/tracking.py` | Optional Mixpanel events (off without `MIXPANEL_TOKEN`). Allow-listed properties only; review text is never sent. |
 | Dashboard | `app.py` | Streamlit app with six tabs: Dashboard, Feedback, Insights, Recommendations, Evaluation, Export. |
 
 ## Quick start
@@ -95,6 +96,10 @@ With Gemini labels the order-type ranking holds (Meal 87% vs Snacks 40%).
 ## Documents
 
 - [Product requirements (PRD)](docs/PRD.md)
+- [Roadmap: next 3 months (Now / Next / Later)](docs/ROADMAP.md)
+- [Experiment plan: packing checklist A/B test](docs/EXPERIMENT_PLAN.md)
+- [Tracking plan: Mixpanel events and privacy rules](docs/TRACKING_PLAN.md)
+- [User research plan and interview script](docs/USER_RESEARCH.md)
 
 ## Project layout
 

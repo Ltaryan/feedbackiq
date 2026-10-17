@@ -25,6 +25,7 @@ from fiq.export import analysed_csv_bytes, report_markdown
 from fiq.insights import build_pain_points, build_recommendations, verify_all_quotes
 from fiq.llm import get_llm_client, method_label, refine_recommendation_text
 from fiq.pipeline import analyze_dataframe
+from fiq.tracking import get_tracker, new_session_id, track
 from fiq.validation import validate_reviews
 
 ROOT = Path(__file__).parent
@@ -40,6 +41,17 @@ st.markdown(
 )
 st.title("FeedbackIQ")
 st.markdown('<p class="fiq-sub">Customer feedback analyser for a 10-minute food delivery app</p>', unsafe_allow_html=True)
+
+# ------------------------------------------------------------------ analytics (optional, off without MIXPANEL_TOKEN)
+tracker = st.cache_resource(get_tracker)()
+if "session_id" not in st.session_state:
+    st.session_state["session_id"] = new_session_id()
+    track(tracker, st.session_state["session_id"], "session_started")
+
+
+def log(event: str, **props) -> None:
+    track(tracker, st.session_state["session_id"], event, props)
+
 
 # ------------------------------------------------------------------ sidebar
 llm_client, llm_msg = get_llm_client()
@@ -67,6 +79,7 @@ with st.sidebar:
     run = st.button("Analyze reviews", type="primary", width="stretch")
 
 if run:
+    data_source = "upload" if source == "Upload my CSV" else "sample"
     try:
         if source == "Upload my CSV":
             if uploaded is None:
@@ -88,13 +101,19 @@ if run:
                 if warn:
                     info["warnings"].append(warn)
             quote_problems = verify_all_quotes(points + recs, df)
+        method = "llm" if info["rule_reviews"] == 0 else "rules" if info["llm_reviews"] == 0 else "mixed"
+        log("analysis_run", data_source=data_source, reviews=len(df), method=method, llm_requested=bool(use_llm),
+            excluded_rows=report["excluded_count"], pain_points=len(points))
         st.session_state["res"] = dict(raw=raw, clean=clean, df=df, info=info, report=report, points=points,
                                        recs=recs, quote_problems=quote_problems, sample=source != "Upload my CSV",
                                        evaluation=None)
     except pd.errors.EmptyDataError:
         st.sidebar.error("That file is empty.")
+        log("analysis_failed", data_source=data_source, reason="empty_file")
     except (ValueError, UnicodeDecodeError) as e:
         st.sidebar.error(str(e))
+        reason = "encoding" if isinstance(e, UnicodeDecodeError) else "no_valid_reviews" if "No valid" in str(e) else "missing_column"
+        log("analysis_failed", data_source=data_source, reason=reason)
 
 res = st.session_state.get("res")
 if not res:
@@ -206,6 +225,9 @@ with tabs[0]:
 with tabs[1]:
     q = st.text_input("Search feedback", placeholder="e.g. refund, cold, crashed")
     table = view[view["feedback_text"].str.contains(q, case=False, regex=False)] if q else view
+    if q and q != st.session_state.get("last_search"):  # log new searches only; the search text itself is never sent
+        st.session_state["last_search"] = q
+        log("feedback_searched", results=len(table))
     cols = [c for c in ["review_id", "date", "rating", "order_type", "feedback_text", "sentiment", "themes", "analysis_method"]
             if c in table.columns]
     st.caption(f"{len(table)} review(s)")
@@ -271,6 +293,7 @@ with tabs[4]:
         if run_rules or run_llm:
             try:
                 res["evaluation"] = evaluate(pd.read_csv(EVAL), client=llm_client if run_llm else None)
+                log("evaluation_run", method="llm" if run_llm else "rules", accuracy=round(res["evaluation"]["accuracy"], 3))
             except Exception as e:  # noqa: BLE001 - show a message, never a traceback
                 st.error(f"Evaluation failed: {str(e)[:200]}")
         ev = res.get("evaluation")
@@ -297,9 +320,11 @@ with tabs[4]:
 
 # ------------------------------------------------------------------ export
 with tabs[5]:
-    st.download_button("Download analysed reviews (CSV)", analysed_csv_bytes(df), "feedbackiq_analysed.csv", "text/csv", width="stretch")
+    st.download_button("Download analysed reviews (CSV)", analysed_csv_bytes(df), "feedbackiq_analysed.csv", "text/csv",
+                       width="stretch", on_click=log, args=("export_downloaded",), kwargs={"format": "csv"})
     md = report_markdown(df, res["points"], res["recs"], info, res["sample"], res.get("evaluation"))
-    st.download_button("Download insights report (Markdown)", md.encode("utf-8"), "feedbackiq_report.md", "text/markdown", width="stretch")
+    st.download_button("Download insights report (Markdown)", md.encode("utf-8"), "feedbackiq_report.md", "text/markdown",
+                       width="stretch", on_click=log, args=("export_downloaded",), kwargs={"format": "markdown"})
     if res.get("evaluation") is None:
         st.caption("Tip: run the evaluation first to include its results in the report.")
     with st.expander("Preview report"):
